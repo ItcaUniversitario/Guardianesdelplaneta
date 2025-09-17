@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defensores del Jardín</title>
+    <style>
+        /* Estilos generales y de layout */
+        :root {
+            --color-cielo: #87CEEB;
+            --color-pasto: #8BC34A;
+            --color-tierra: #A1887F;
+            --color-panel: #2c3e50;
+            --color-texto: #ecf0f1;
+            --color-sombra: rgba(0, 0, 0, 0.2);
+            --fuente-principal: 'Arial', sans-serif;
+        }
+
+        body {
+            font-family: var(--fuente-principal);
+            margin: 0;
+            background-color: var(--color-cielo);
+            color: var(--color-texto);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.5s ease;
+        }
+
+        .game-container {
+            position: relative;
+            width: 900px;
+            height: 600px;
+            background-color: var(--color-pasto);
+            box-shadow: 0 10px 20px var(--color-sombra);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 5px solid #386641;
+            display: flex; /* Usamos flexbox para organizar los elementos */
+            flex-direction: column;
+        }
+
+        /* HUD - Interfaz de Usuario */
+        .hud {
+            width: 100%;
+            height: 50px;
+            background-color: rgba(44, 62, 80, 0.8);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 18px;
+            font-weight: bold;
+            border-bottom: 3px solid #6a994e;
+        }
+
+        .hud-item {
+            display: flex;
+            align-items: center;
+            margin: 0 10px;
+        }
+
+        .hud-item span {
+            margin-left: 8px;
+        }
+
+        /* Barra de progreso de oleada */
+        .wave-progress-container {
+            flex-grow: 1;
+            height: 20px;
+            background-color: #555;
+            border-radius: 10px;
+            margin: 0 20px;
+            overflow: hidden;
+            border: 2px solid #333;
+        }
+
+        .wave-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ff8c00);
+            border-radius: 8px 0 0 8px;
+            transition: width 0.5s ease-in-out;
+        }
+        
+        /* Contenedor del área de juego para posicionar los elementos */
+        .game-area-container {
+            position: relative;
+            flex-grow: 1; /* Ocupa el espacio restante */
+        }
+        
+        canvas {
+            display: block;
+            position: absolute; /* Posicionado dentro del nuevo contenedor */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Barra lateral de defensores */
+        .defenders-menu {
+            position: absolute;
+            left: 0;
+            top: 0; /* Ahora se posiciona desde el inicio del contenedor de juego */
+            bottom: 0;
+            width: 100px;
+            background-color: rgba(96, 125, 139, 0.8);
+            padding-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-right: 3px solid #a7c957;
+        }
+
+        .defender-card {
+            width: 80px;
+            height: 90px;
+            background-color: #f2e8cf;
+            border: 2px solid #a7c957;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            color: #333;
+        }
+        
+        .defender-card.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #f4a261;
+            border-color: #f4a261;
+        }
+
+        .defender-card:hover {
+            transform: scale(1.05);
+        }
+
+        .defender-icon {
+            font-size: 36px;
+            height: 36px; /* Para alinear el SVG */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .defender-cost {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .defender-cost span {
+            color: #2a9d8f;
+        }
+
+        /* Modal para recursos educativos y mensajes */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none; /* Oculto por defecto */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            width: 80%;
+            height: 80%;
+            max-width: 1000px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            color: #333;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .modal-close-btn {
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        .modal-body {
+            flex-grow: 1;
+            position: relative;
+            line-height: 1.6;
+        }
+        
+        .modal-body ul {
+            list-style: none;
+            padding: 0;
+        }
+        .modal-body li {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .modal-body strong {
+            color: #386641;
+        }
+
+        .modal-body iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .iframe-fallback {
+            display: none; /* Oculto por defecto */
+            text-align: center;
+            padding: 50px;
+        }
+
+        .fallback-button {
+            padding: 12px 25px;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: var(--color-pasto);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+            margin-top: 20px;
+        }
+        .fallback-button:hover {
+            background-color: #6a994e;
+        }
+
+        /* Mensajes en pantalla (pausa, game over) */
+        .game-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 30px 50px;
+            border-radius: 20px;
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            display: none; /* Oculto por defecto */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <div class="hud">
+            <div class="hud-item" title="Energía Verde">
+                <span>🍃</span>
+                <span id="energiaVerde">100</span>
+            </div>
+            <div class="hud-item" title="Puntos Ambientales">
+                <span>🌍</span>
+                <span id="puntosAmbientales">0</span>
+            </div>
+            <div class="hud-item" title="Oleada Actual">
+                <span>🌊</span>
+                <span id="oleadaActual">1 / 5</span>
+            </div>
+            <div class="wave-progress-container">
+                <div id="waveProgressBar" class="wave-progress-bar"></div>
+            </div>
+             <div class="hud-item" title="Controles: M (Silencio), P (Pausa)">
+                <span id="audioStatus">🔊</span>
+                <span id="pauseStatus">▶️</span>
+            </div>
+        </div>
+
+        <div class="game-area-container">
+            <canvas id="gameCanvas"></canvas>
+
+            <div class="defenders-menu" id="defendersMenu">
+                </div>
+        </div>
+        
+        <div id="pauseMessage" class="game-message">JUEGO EN PAUSA</div>
+        <div id="gameOverMessage" class="game-message">
+            <span id="gameOverText">FIN DEL JUEGO</span>
+            <button id="restartBtn" class="fallback-button">Reiniciar</button>
+        </div>
+    </div>
+
+    <div id="startModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px; height: auto;">
+            <div class="modal-header">
+                <h2 class="modal-title">¡Bienvenido a Defensores del Jardín!</h2>
+            </div>
+            <div class="modal-body" style="text-align: left;">
+                <h3>Tu Misión:</h3>
+                <p>Protege el jardín escolar de las amenazas de la contaminación. Coloca defensores para detener a los enemigos que avanzan desde la derecha.</p>
+                <h3>Defensores Sostenibles:</h3>
+                <ul>
+                    <li><strong>Árbol 🌳:</strong> Frena enemigos y dispara “hojas verdes”.</li>
+                    <li><strong>Panel solar:</strong> No ataca, pero genera más energía verde.</li>
+                    <li><strong>Bicicleta 🚲:</strong> Dispara rápido y debilita el humo.</li>
+                    <li><strong>Contenedor de reciclaje ♻️:</strong> Frena la basura y la convierte en puntos.</li>
+                </ul>
+                <button id="startGameBtn" class="fallback-button" style="width: 100%;">¡A Jugar!</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="educationalModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle" class="modal-title">Recurso Educativo</h2>
+                <button id="modalCloseBtn" class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="resourceIframe" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+                <div id="iframeFallback" class="iframe-fallback">
+                    <p>Este contenido no se puede mostrar aquí.</p>
+                    <button id="fallbackBtn" class="fallback-button">Abrir en nueva pestaña</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===================================================================================
+        // ============================ PERSONALIZA AQUÍ =====================================
+        // ===================================================================================
+
+        const ENEMIGOS = [
+            { id: "plastico", emoji: "🛍️", vida: 6, velocidad: 0.25, puntos: 10 },
+            { id: "humo", emoji: "💨", vida: 3, velocidad: 0.5, puntos: 15 },
+            { id: "agua", emoji: "💧", vida: 4, velocidad: 0.35, puntos: 20 },
+            { id: "fabrica", emoji: "🏭", vida: 25, velocidad: 0.12, puntos: 100, esJefe: true },
+            { id: "monstruo_basura", emoji: "🗑️👹", vida: 40, velocidad: 0.1, puntos: 250, esJefe: true }
+        ];
+
+        const DEFENSORES = [
+            { id: "arbol", nombre: "Árbol", emoji: "🌳", costo: 50, vida: 10, ataque: 1, cadencia: 1500, rango: 250 },
+            { 
+                id: "panel", nombre: "Panel Solar", costo: 25, vida: 5, energiaExtra: 15, cadencia: 5000,
+                draw: function(ctx, x, y) {
+                    ctx.fillStyle = '#2c3e50'; // Base
+                    ctx.fillRect(x - 24, y - 24, 48, 48);
+                    ctx.fillStyle = '#4a90e2'; // Panel surface
+                    ctx.fillRect(x - 20, y - 20, 40, 40);
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - 20); ctx.lineTo(x, y + 20);
+                    ctx.moveTo(x - 20, y - 10); ctx.lineTo(x + 20, y - 10);
+                    ctx.moveTo(x - 20, y + 10); ctx.lineTo(x + 20, y + 10);
+                    ctx.stroke();
+                }
+            },
+            { id: "bicicleta", nombre: "Bicicleta", emoji: "🚲", costo: 75, vida: 7, ataque: 0.5, cadencia: 500, rango: 300 },
+            { id: "contenedor", nombre: "Contenedor", emoji: "♻️", costo: 100, vida: 20, efecto: "neutraliza_plastico", rango: 50 }
+        ];
+
+        const RECURSOS_EDUCATIVOS = [
+            {
+                id: "reciclaje",
+                titulo: "Aprende a Reciclar Correctamente",
+                url: "https://youtu.be/5aFIT6JQMVs"
+            },
+            {
+                id: "energia",
+                titulo: "El Futuro es Renovable",
+                url: "https://www.nationalgeographic.es/medio-ambiente/energias-renovables"
+            },
+            {
+                id: "agua",
+                titulo: "La Importancia de Cuidar el Agua",
+                url: "https://youtu.be/I_6C5lSGYYM"
+            },
+            {
+                id: "economia_circular",
+                titulo: "¿Qué es la Economía Circular?",
+                url: "https://youtu.be/zeLIGu8l9OY"
+            },
+            {
+                id: "isla_plastico",
+                titulo: "La Gran Mancha de Basura del Pacífico",
+                url: "https://youtu.be/dK-_aO1HeDQ"
+            }
+        ];
+        
+        const OLEADAS = [
+            { enemigos: ["plastico", "plastico", "plastico", "humo", "plastico"] },
+            { enemigos: ["plastico", "humo", "agua", "plastico", "humo", "humo", "agua"] },
+            { enemigos: ["agua", "agua", "humo", "plastico", "humo", "plastico", "agua", "humo"] },
+            { enemigos: ["plastico", "humo", "plastico", "agua", "humo", "agua", "plastico", "fabrica"] },
+            { enemigos: ["agua", "humo", "fabrica", "plastico", "humo", "agua", "fabrica", "monstruo_basura"] }
+        ];
+
+        const ENTORNOS = [
+            // Oleada 1: Jardín Escolar
+            { tierra: '#a98467', pasto: '#6a994e', cielo: '#87CEEB', detalles: null },
+            // Oleada 2: Parque Urbano
+            { tierra: '#b0b0b0', pasto: '#76b852', cielo: '#a7d7f9', detalles: (ctx) => {
+                ctx.fillStyle = '#888'; ctx.fillRect(100, 290, 800, 20);
+            }},
+            // Oleada 3: Playa Contaminada
+            { tierra: '#f4e1c1', pasto: '#0077be', cielo: '#87CEEB', detalles: (ctx) => {
+                ctx.fillStyle = '#6ab5d8'; ctx.fillRect(100, 0, 800, 50);
+                ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.fillRect(100, 50, 800, 10);
+            }},
+            // Oleada 4: Río Sucio
+            { tierra: '#6b4f2e', pasto: '#2e4c3b', cielo: '#b0c4de', detalles: (ctx) => {
+                ctx.strokeStyle = '#251a0e'; ctx.lineWidth = 3; 
+                ctx.beginPath();
+                ctx.moveTo(100, 100); ctx.lineTo(900, 120);
+                ctx.moveTo(100, 300); ctx.lineTo(900, 280);
+                ctx.moveTo(100, 500); ctx.lineTo(900, 510);
+                ctx.stroke();
+            }},
+            // Oleada 5: Vertedero
+            { tierra: '#5d5550', pasto: '#444', cielo: '#888', detalles: (ctx) => {
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.beginPath();
+                ctx.arc(250, 550, 80, 0, Math.PI * 2);
+                ctx.arc(650, 560, 100, 0, Math.PI * 2);
+                ctx.arc(800, 100, 120, 0, Math.PI * 2);
+                ctx.fill();
+            }}
+        ];
+
+        const OPCIONES = {
+            energiaInicial: 100,
+            puntosBonus: 100,
+            puntosPenalizacion: -50,
+            tiempoMinActividad: 10, // segundos
+            energiaAutomatica: 5,
+            intervaloEnergia: 2500 // ms
+        };
+
+        // ===================================================================================
+        // ========================== FIN DE LA PERSONALIZACIÓN ==============================
+        // ===================================================================================
+
+        // Elementos del DOM
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const energiaVerdeEl = document.getElementById('energiaVerde');
+        const puntosAmbientalesEl = document.getElementById('puntosAmbientales');
+        const oleadaActualEl = document.getElementById('oleadaActual');
+        const defendersMenuEl = document.getElementById('defendersMenu');
+        const modalEl = document.getElementById('educationalModal');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+        const modalTitleEl = document.getElementById('modalTitle');
+        const resourceIframeEl = document.getElementById('resourceIframe');
+        const iframeFallbackEl = document.getElementById('iframeFallback');
+        const fallbackBtn = document.getElementById('fallbackBtn');
+        const pauseMessageEl = document.getElementById('pauseMessage');
+        const gameOverMessageEl = document.getElementById('gameOverMessage');
+        const gameOverTextEl = document.getElementById('gameOverText');
+        const restartBtn = document.getElementById('restartBtn');
+        const audioStatusEl = document.getElementById('audioStatus');
+        const pauseStatusEl = document.getElementById('pauseStatus');
+        const startModalEl = document.getElementById('startModal');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const waveProgressBar = document.getElementById('waveProgressBar');
+
+        // Estado del juego
+        let gameState = {};
+
+        // Audio
+        let audioCtx;
+        let autoEnergyInterval;
+        
+        // --- FUNCIONES DE AUDIO CON WEBAUDIO API ---
+        function initAudio() {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.warn('Web Audio API no es soportada en este navegador.');
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx || gameState.muted) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            switch (type) {
+                case 'recolectar': // ding
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+                    break;
+                case 'colocar': // pop
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                    break;
+                case 'derrotar': // whoosh
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                    break;
+                case 'error': // buzz
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(120, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                    break;
+            }
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        }
+        
+        // --- INICIALIZACIÓN DEL JUEGO ---
+        function initGame() {
+            canvas.width = 900;
+            canvas.height = 600;
+
+            if (autoEnergyInterval) clearInterval(autoEnergyInterval);
+
+            gameState = {
+                energia: OPCIONES.energiaInicial,
+                puntos: 0,
+                oleadaActual: 0,
+                grid: createGrid(5, 9),
+                defensores: [],
+                enemigos: [],
+                proyectiles: [],
+                particulas: [],
+                gameOver: false,
+                paused: false,
+                muted: false,
+                selectedDefender: null,
+                modalTimer: null,
+                modalStartTime: 0,
+                lastFrameTime: 0,
+                totalEnemigosOleada: 0,
+                enemigosDerrotadosOleada: 0,
+            };
+            
+            populateDefendersMenu();
+            updateHUD();
+            startOleada();
+            
+            // Iniciar generación automática de energía
+            autoEnergyInterval = setInterval(() => {
+                if (!gameState.paused && !gameState.gameOver) {
+                    gameState.energia += OPCIONES.energiaAutomatica;
+                    createParticle(50, 25, '🍃', '#2a9d8f');
+                    playSound('recolectar');
+                    updateHUD();
+                }
+            }, OPCIONES.intervaloEnergia);
+
+            gameLoop(0);
+        }
+        
+        function createGrid(rows, cols) {
+            const grid = [];
+            for (let y = 0; y < rows; y++) {
+                grid[y] = [];
+                for (let x = 0; x < cols; x++) {
+                    grid[y][x] = null; // Celda vacía
+                }
+            }
+            return grid;
+        }
+
+        function populateDefendersMenu() {
+            defendersMenuEl.innerHTML = '';
+            DEFENSORES.forEach(def => {
+                const card = document.createElement('div');
+                card.className = 'defender-card';
+                card.dataset.id = def.id;
+                
+                const iconHTML = def.id === 'panel' ?
+                    `<div class="defender-icon"><svg width="36" height="36" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="10" width="80" height="80" rx="10" fill="#2c3e50"/><rect x="15" y="15" width="70" height="70" fill="#4a90e2"/><line x1="50" y1="15" x2="50" y2="85" stroke="white" stroke-width="5"/><line x1="15" y1="35" x2="85" y2="35" stroke="white" stroke-width="5"/><line x1="15" y1="65" x2="85" y2="65" stroke="white" stroke-width="5"/></svg></div>` :
+                    `<div class="defender-icon">${def.emoji}</div>`;
+
+                card.innerHTML = `
+                    ${iconHTML}
+                    <div>${def.nombre}</div>
+                    <div class="defender-cost"><span>🍃</span> ${def.costo}</div>
+                `;
+                card.addEventListener('click', () => selectDefender(def.id, card));
+                defendersMenuEl.appendChild(card);
+            });
+        }
+
+        // --- LÓGICA DE OLEADAS Y ENEMIGOS ---
+        function startOleada() {
+            if (gameState.oleadaActual >= OLEADAS.length) {
+                endGame(true); // Ganó el juego
+                return;
+            }
+            
+            const oleada = OLEADAS[gameState.oleadaActual];
+            gameState.totalEnemigosOleada = oleada.enemigos.length;
+            gameState.enemigosDerrotadosOleada = 0;
+            updateWaveProgress();
+
+            let spawnDelay = 1000;
+            oleada.enemigos.forEach(tipoEnemigo => {
+                setTimeout(() => {
+                    if (!gameState.gameOver) spawnEnemy(tipoEnemigo);
+                }, spawnDelay);
+                spawnDelay += Math.random() * 2000 + 2000;
+            });
+            updateHUD();
+        }
+
+        function spawnEnemy(tipo) {
+            const enemigoData = ENEMIGOS.find(e => e.id === tipo);
+            const fila = Math.floor(Math.random() * 5);
+            const y = fila * 100 + 50;
+            
+            gameState.enemigos.push({
+                ...enemigoData,
+                x: canvas.width,
+                y: y,
+                fila: fila,
+                maxVida: enemigoData.vida,
+                idUnico: Math.random()
+            });
+        }
+
+        function endOleada() {
+            gameState.oleadaActual++;
+            if (gameState.oleadaActual < OLEADAS.length) {
+                const resource = RECURSOS_EDUCATIVOS[gameState.oleadaActual - 1];
+                openRecurso(resource);
+            } else {
+                endGame(true); // Ganó el juego
+            }
+        }
+        
+        // --- LÓGICA DE DEFENSORES ---
+        function selectDefender(id, card) {
+            const defenderData = DEFENSORES.find(d => d.id === id);
+            if (gameState.energia >= defenderData.costo) {
+                gameState.selectedDefender = id;
+                document.querySelectorAll('.defender-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+            } else {
+                playSound('error');
+                createParticle(card.getBoundingClientRect().x, card.getBoundingClientRect().y, 'No 🍃', 'red');
+            }
+        }
+
+        function placeDefender(gridX, gridY) {
+            if (!gameState.selectedDefender || gameState.grid[gridY][gridX]) return;
+            
+            const defenderData = DEFENSORES.find(d => d.id === gameState.selectedDefender);
+            if (gameState.energia >= defenderData.costo) {
+                gameState.energia -= defenderData.costo;
+                const newDefender = {
+                    ...defenderData,
+                    x: gridX * 100 + 150,
+                    y: gridY * 100 + 50,
+                    gridX,
+                    gridY,
+                    maxVida: defenderData.vida,
+                    lastActionTime: Date.now()
+                };
+                gameState.defensores.push(newDefender);
+                gameState.grid[gridY][gridX] = newDefender;
+                gameState.selectedDefender = null;
+                document.querySelectorAll('.defender-card').forEach(c => c.classList.remove('selected'));
+                playSound('colocar');
+                updateHUD();
+            }
+        }
+
+        // --- BUCLE PRINCIPAL DEL JUEGO ---
+        function gameLoop(timestamp) {
+            if (gameState.gameOver) {
+                return; // Detiene el bucle si el juego ha terminado
+            }
+
+            if (!gameState.lastFrameTime) gameState.lastFrameTime = timestamp;
+            const dt = (timestamp - gameState.lastFrameTime) / 1000;
+            gameState.lastFrameTime = timestamp;
+
+            if (!gameState.paused) {
+                updateGame(dt);
+            }
+            renderGame();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updateGame(dt) {
+            // Actualizar defensores
+            gameState.defensores.forEach(def => {
+                if (Date.now() - def.lastActionTime > def.cadencia) {
+                    def.lastActionTime = Date.now();
+                    if (def.id === 'panel') {
+                        gameState.energia += def.energiaExtra;
+                        playSound('recolectar');
+                        createParticle(def.x, def.y - 20, `+${def.energiaExtra}🍃`, '#f9c74f');
+                        updateHUD();
+                    }
+                    if ((def.id === 'arbol' || def.id === 'bicicleta') && hayEnemigoEnFila(def.gridY, def.x, def.rango)) {
+                        gameState.proyectiles.push({
+                            x: def.x + 20, y: def.y, damage: def.ataque,
+                            speed: def.id === 'bicicleta' ? 300 : 150,
+                            emoji: def.id === 'bicicleta' ? '⚙️' : '🌿', fila: def.gridY
+                        });
+                    }
+                }
+            });
+
+            // Actualizar proyectiles
+            gameState.proyectiles = gameState.proyectiles.filter(p => p.x <= canvas.width);
+            gameState.proyectiles.forEach(p => p.x += p.speed * dt);
+
+            // Actualizar enemigos
+            gameState.enemigos.forEach(enemigo => {
+                enemigo.x -= enemigo.velocidad * 60 * dt;
+                if (enemigo.x < 100) {
+                    endGame(false); // Perdió el juego
+                }
+            });
+
+            // Colisiones
+            handleCollisions();
+            
+            // Actualizar partículas
+            gameState.particulas = gameState.particulas.filter(p => p.alpha > 0);
+            gameState.particulas.forEach(p => {
+                p.y -= 30 * dt;
+                p.alpha -= 1.5 * dt;
+            });
+            
+            // Comprobar fin de oleada
+            if (gameState.enemigos.length === 0 && gameState.enemigosDerrotadosOleada === gameState.totalEnemigosOleada) {
+                if (!gameState.esperandoOleada) {
+                    gameState.esperandoOleada = true;
+                    setTimeout(() => {
+                        if (gameState.enemigos.length === 0 && !gameState.gameOver) {
+                            endOleada();
+                            gameState.esperandoOleada = false;
+                        }
+                    }, 3000); 
+                }
+            }
+        }
+        
+        function handleCollisions() {
+            for (let i = gameState.proyectiles.length - 1; i >= 0; i--) {
+                const p = gameState.proyectiles[i];
+                for (let j = gameState.enemigos.length - 1; j >= 0; j--) {
+                    const e = gameState.enemigos[j];
+                    if (p.fila === e.fila && Math.abs(p.x - e.x) < 20) {
+                        e.vida -= p.damage;
+                        gameState.proyectiles.splice(i, 1);
+                        if (e.vida <= 0) {
+                            gameState.puntos += e.puntos;
+                            gameState.enemigosDerrotadosOleada++;
+                            updateWaveProgress();
+                            playSound('derrotar');
+                            createParticle(e.x, e.y, `+${e.puntos}🌍`, '#80ed99');
+                            gameState.enemigos.splice(j, 1);
+                        }
+                        break; // Proyectil solo golpea a un enemigo
+                    }
+                }
+            }
+
+            gameState.enemigos.forEach(e => {
+                const gridX = Math.floor((e.x - 100) / 100);
+                if (gridX < 0 || gridX > 8) return;
+                const def = gameState.grid[e.fila][gridX];
+                if (def && Math.abs(e.x - def.x) < 30) {
+                    if (def.id === 'contenedor' && e.id === 'plastico') {
+                        gameState.puntos += e.puntos * 2;
+                        gameState.enemigosDerrotadosOleada++; 
+                        updateWaveProgress();
+                        createParticle(e.x, e.y, `+${e.puntos*2}🌍`, '#40916c');
+                        gameState.enemigos = gameState.enemigos.filter(en => en.idUnico !== e.idUnico);
+                        def.vida -= 1; 
+                    } else {
+                        def.vida -= 0.05; 
+                    }
+                    
+                    if (def.vida <= 0) {
+                        gameState.grid[def.gridY][def.gridX] = null;
+                        gameState.defensores = gameState.defensores.filter(d => !(d.gridX === def.gridX && d.gridY === def.gridY));
+                    }
+                }
+            });
+        }
+        
+        function hayEnemigoEnFila(fila, x, rango) {
+            return gameState.enemigos.some(e => e.fila === fila && e.x > x && e.x < x + rango);
+        }
+
+        function drawBackground() {
+            const entorno = ENTORNOS[Math.min(gameState.oleadaActual, ENTORNOS.length - 1)];
+            document.body.style.backgroundColor = entorno.cielo;
+            ctx.fillStyle = entorno.tierra;
+            ctx.fillRect(100, 0, canvas.width - 100, canvas.height);
+            ctx.fillStyle = entorno.pasto;
+            ctx.fillRect(0, 0, 100, canvas.height);
+            if (entorno.detalles) {
+                entorno.detalles(ctx);
+            }
+        }
+
+        // --- RENDERIZADO DEL JUEGO ---
+        function renderGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackground();
+
+            for (let y = 0; y < 5; y++) {
+                for (let x = 0; x < 9; x++) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                    ctx.strokeRect(x * 100 + 100, y * 100, 100, 100);
+                }
+            }
+
+            // --- Marca de agua ---
+            ctx.save();
+            ctx.font = 'bold 120px Arial';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.translate(canvas.width / 2 + 50, canvas.height / 2);
+            ctx.rotate(-0.25);
+            ctx.fillText('BETA', 0, 0);
+            ctx.restore();
+
+            gameState.defensores.forEach(def => {
+                if (def.draw) {
+                    def.draw(ctx, def.x, def.y);
+                } else {
+                    ctx.font = '48px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(def.emoji, def.x, def.y);
+                }
+
+                if (def.vida < def.maxVida) {
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(def.x - 20, def.y + 25, 40, 5);
+                    ctx.fillStyle = 'green';
+                    ctx.fillRect(def.x - 20, def.y + 25, 40 * (def.vida / def.maxVida), 5);
+                }
+            });
+
+            gameState.enemigos.forEach(e => {
+                ctx.font = e.esJefe ? '64px sans-serif' : '48px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.globalAlpha = e.id === 'humo' ? 0.7 : 1.0;
+                ctx.fillText(e.emoji, e.x, e.y);
+                ctx.globalAlpha = 1.0;
+                ctx.fillStyle = 'red';
+                ctx.fillRect(e.x - 20, e.y - 30, 40, 5);
+                ctx.fillStyle = 'orange';
+                ctx.fillRect(e.x - 20, e.y - 30, 40 * (e.vida / e.maxVida), 5);
+            });
+
+            gameState.proyectiles.forEach(p => {
+                ctx.font = '24px sans-serif';
+                ctx.fillText(p.emoji, p.x, p.y);
+            });
+            
+            gameState.particulas.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha;
+                ctx.font = 'bold 18px sans-serif';
+                ctx.fillText(p.text, p.x, p.y);
+                ctx.globalAlpha = 1.0;
+            });
+        }
+        
+        // --- LÓGICA DEL MODAL EDUCATIVO ---
+        function openRecurso(recurso) {
+            if (!recurso) return;
+            gameState.paused = true;
+            pauseStatusEl.textContent = '⏸️';
+
+            // Extraer el ID del video de YouTube del enlace largo o corto
+            let videoId;
+            const youtubeRegex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([^?&\n]+)/;
+            const match = recurso.url.match(youtubeRegex);
+            if (match && match[1]) {
+                videoId = match[1];
+            }
+
+            // Construir la URL de incrustación (embed URL)
+            const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}` : recurso.url;
+
+            modalTitleEl.textContent = recurso.titulo;
+            resourceIframeEl.src = embedUrl;
+            fallbackBtn.onclick = () => window.open(recurso.url, '_blank');
+
+            const iframeLoadTimeout = setTimeout(() => {
+                resourceIframeEl.style.display = 'none';
+                iframeFallbackEl.style.display = 'block';
+            }, 2000);
+
+            resourceIframeEl.onload = () => {
+                clearTimeout(iframeLoadTimeout);
+                resourceIframeEl.style.display = 'block';
+                iframeFallbackEl.style.display = 'none';
+            };
+
+            modalEl.style.display = 'flex';
+            gameState.modalStartTime = Date.now();
+        }
+
+        function closeRecurso() {
+            modalEl.style.display = 'none';
+            resourceIframeEl.src = 'about:blank';
+            
+            const tiempoTranscurrido = (Date.now() - gameState.modalStartTime) / 1000;
+            if (tiempoTranscurrido >= OPCIONES.tiempoMinActividad) {
+                gameState.puntos += OPCIONES.puntosBonus;
+                playSound('recolectar');
+                createParticle(canvas.width / 2, canvas.height / 2, `+${OPCIONES.puntosBonus}🌍 Bonus!`, '#4caf50');
+            } else {
+                gameState.puntos += OPCIONES.puntosPenalizacion;
+                playSound('error');
+                createParticle(canvas.width / 2, canvas.height / 2, `${OPCIONES.puntosPenalizacion}🌍`, '#f44336');
+            }
+            
+            gameState.paused = false;
+            pauseStatusEl.textContent = '▶️';
+            updateHUD();
+            startOleada();
+        }
+
+        // --- UTILIDADES Y MANEJO DE ESTADO ---
+        function updateHUD() {
+            energiaVerdeEl.textContent = gameState.energia;
+            puntosAmbientalesEl.textContent = gameState.puntos;
+            oleadaActualEl.textContent = `${gameState.oleadaActual + 1} / ${OLEADAS.length}`;
+        }
+        
+        function updateWaveProgress() {
+            if (gameState.totalEnemigosOleada > 0) {
+                const progress = (gameState.enemigosDerrotadosOleada / gameState.totalEnemigosOleada) * 100;
+                waveProgressBar.style.width = `${progress}%`;
+            } else {
+                waveProgressBar.style.width = '0%';
+            }
+        }
+
+        function endGame(isVictory) {
+            if (gameState.gameOver) return;
+            gameState.gameOver = true;
+            gameOverTextEl.textContent = isVictory ? "¡VICTORIA!" : "FIN DEL JUEGO";
+            gameOverMessageEl.style.display = 'flex';
+        }
+
+        function restartGame() {
+            gameOverMessageEl.style.display = 'none';
+            initGame();
+        }
+
+        function createParticle(x, y, text, color) {
+            gameState.particulas.push({ x, y, text, color, alpha: 1.0 });
+        }
+
+        function togglePause() {
+            if (modalEl.style.display === 'flex' || startModalEl.style.display === 'flex' || gameState.gameOver) return;
+            gameState.paused = !gameState.paused;
+            pauseMessageEl.style.display = gameState.paused ? 'block' : 'none';
+            pauseStatusEl.textContent = gameState.paused ? '⏸️' : '▶️';
+        }
+
+        function toggleMute() {
+            gameState.muted = !gameState.muted;
+            audioStatusEl.textContent = gameState.muted ? '🔇' : '🔊';
+        }
+
+        // --- EVENT LISTENERS ---
+        canvas.addEventListener('click', (e) => {
+            if (gameState.paused || !gameState.selectedDefender) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            if (x > 100) {
+                const gridX = Math.floor((x - 100) / 100);
+                const gridY = Math.floor(y / 100);
+                if (gridX < 9 && gridY < 5) {
+                    placeDefender(gridX, gridY);
+                }
+            }
+        });
+        
+        modalCloseBtn.addEventListener('click', closeRecurso);
+        restartBtn.addEventListener('click', restartGame);
+
+        startGameBtn.addEventListener('click', () => {
+            startModalEl.style.display = 'none';
+            initGame();
+        });
+        
+        window.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'p') {
+                togglePause();
+            }
+            if (e.key.toLowerCase() === 'm') {
+                toggleMute();
+            }
+        });
+
+        // --- INICIO ---
+        window.onload = () => {
+            initAudio();
+            startModalEl.style.display = 'flex';
+        };
+
+        /*
+        ===================================================================================
+        === CÓMO PERSONALIZAR Y EXPANDIR EL JUEGO ===
+        ===================================================================================
+        
+        1. AÑADIR NUEVOS DEFENSORES:
+           - Ve al bloque "PERSONALIZA AQUÍ".
+           - En el array `DEFENSORES`, añade un nuevo objeto con las propiedades:
+             `id`, `nombre`, `emoji`, `costo`, `vida`.
+           - Si ataca, añade `ataque`, `cadencia` (en ms) y `rango`.
+           - Si genera energía, añade `energiaExtra` y `cadencia`.
+           - El juego lo añadirá automáticamente al menú.
+
+        2. AÑADIR NUEVOS ENEMIGOS:
+           - En el array `ENEMIGOS`, añade un nuevo objeto con:
+             `id`, `emoji`, `vida`, `velocidad` (más bajo es más lento), `puntos`.
+           - Si es un jefe, añade `esJefe: true` para que sea más grande.
+
+        3. MODIFICAR OLEADAS:
+           - En el array `OLEADAS`, cada objeto es una oleada.
+           - El array `enemigos` dentro de cada objeto define qué enemigos y en qué
+             orden aparecerán. Simplemente añade los `id` de los enemigos que quieras.
+
+        4. CAMBIAR RECURSOS EDUCATIVOS:
+           - En `RECURSOS_EDUCATIVOS`, modifica los objetos existentes o añade nuevos.
+           - `titulo`: El texto que aparecerá en el modal.
+           - `url`: ¡IMPORTANTE! Usa URLs con "embed" para videos de YouTube. Para
+             otras webs, asegúrate de que permitan ser mostradas en un <iframe>.
+             Si no, el juego mostrará la opción "Abrir en nueva pestaña".
+        
+        5. AJUSTAR LA DIFICULTAD:
+           - En el objeto `OPCIONES`, puedes cambiar:
+             - `energiaInicial`: Cuánta energía tienes al empezar.
+             - `energiaAutomatica` e `intervaloEnergia`: La velocidad a la que ganas
+               energía pasivamente.
+             - `puntosBonus` y `puntosPenalizacion`: Recompensas por ver los recursos.
+             - `tiempoMinActividad`: Segundos mínimos para obtener el bonus.
+        
+        ===================================================================================
+        */
+    </script>
+</body>
+</html>
