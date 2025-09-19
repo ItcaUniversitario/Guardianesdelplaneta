@@ -31,14 +31,14 @@
 
         .game-container {
             position: relative;
-            width: 900px;
+            width: 1010px;
             height: 600px;
             background-color: var(--color-pasto);
             box-shadow: 0 10px 20px var(--color-sombra);
             border-radius: 15px;
             overflow: hidden;
             border: 5px solid #386641;
-            display: flex; /* Usamos flexbox para organizar los elementos */
+            display: flex;
             flex-direction: column;
         }
 
@@ -68,19 +68,18 @@
         
         /* Estilos para el logo en el HUD */
         .game-logo {
-            flex-grow: 1; /* Permite que el logo ocupe el espacio central disponible */
-            text-align: center; /* Centra la imagen dentro del div */
-            display: flex; /* Para centrar verticalmente la imagen si es más pequeña */
-            align-items: center; /* Centra verticalmente */
-            justify-content: center; /* Centra horizontalmente */
+            flex-grow: 1;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .game-logo img {
-            max-height: 40px; /* Ajusta el tamaño máximo de tu logo */
-            max-width: 150px; /* Ajusta el ancho máximo de tu logo */
+            max-height: 40px;
+            max-width: 150px;
             object-fit: contain;
         }
-
 
         /* Barra de progreso de oleada */
         .wave-progress-container {
@@ -104,32 +103,32 @@
         /* Contenedor del área de juego para posicionar los elementos */
         .game-area-container {
             position: relative;
-            flex-grow: 1; /* Ocupa el espacio restante */
+            flex-grow: 1;
+            display: flex;
         }
         
+        /* Ajustamos el tamaño y posición del canvas */
         canvas {
             display: block;
-            position: absolute; /* Posicionado dentro del nuevo contenedor */
-            top: 0;
-            left: 0;
-            width: 100%;
+            width: 800px;
             height: 100%;
         }
-
+        
         /* Barra lateral de defensores */
         .defenders-menu {
-            position: absolute;
+            position: relative;
             left: 0;
             top: 0;
             bottom: 0;
-            width: 100px;
+            width: 210px;
             background-color: rgba(96, 125, 139, 0.8);
             padding-top: 10px;
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            flex-wrap: wrap; 
+            justify-content: center;
+            align-content: flex-start;
             border-right: 3px solid #a7c957;
-            overflow-y: auto;
+            overflow-y: hidden;
         }
 
         .defender-card {
@@ -138,7 +137,7 @@
             background-color: #f2e8cf;
             border: 2px solid #a7c957;
             border-radius: 10px;
-            margin-bottom: 10px;
+            margin: 5px;
             cursor: pointer;
             display: flex;
             flex-direction: column;
@@ -190,7 +189,7 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.7);
-            display: none; /* Oculto por defecto */
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -256,7 +255,7 @@
         }
 
         .iframe-fallback {
-            display: none; /* Oculto por defecto */
+            display: none;
             text-align: center;
             padding: 50px;
         }
@@ -289,7 +288,7 @@
             font-size: 48px;
             font-weight: bold;
             text-align: center;
-            display: none; /* Oculto por defecto */
+            display: none;
         }
     </style>
 </head>
@@ -307,6 +306,8 @@
             </div>
             
             <div class="game-logo" id="gameLogo">
+                <img src="https://raw.githubusercontent.com/lennin1219/JuegoPlantsVSzombies/main/monstruo_basura" alt="Mi Logo del Juego">
+                <span>Guardianes del Planeta</span>
                 </div>
         
             <div class="hud-item" title="Oleada Actual">
@@ -323,10 +324,9 @@
         </div>
 
         <div class="game-area-container">
-            <canvas id="gameCanvas"></canvas>
-
             <div class="defenders-menu" id="defendersMenu">
                 </div>
+            <canvas id="gameCanvas"></canvas>
         </div>
         
         <div id="pauseMessage" class="game-message">JUEGO EN PAUSA</div>
@@ -339,22 +339,22 @@
     <div id="startModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 600px; height: auto;">
             <div class="modal-header">
-                <h2 class="modal-title">¡Bienvenido a Defensores del Jardín!</h2>
+                <h2 class="modal-title">¡Bienvenido a Guardianes del Planeta!</h2>
             </div>
             <div class="modal-body" style="text-align: left;">
                 <h3>Tu Misión:</h3>
-                <p>Protege el jardín escolar de las amenazas de la contaminación. Coloca defensores para detener a los enemigos que avanzan desde la derecha.</p>
-                <h3>Defensores Sostenibles:</h3>
+                <p>Protege el jardín ITCA de las amenazas de la contaminación. Coloca defensores para detener a los enemigos que avanzan desde la derecha.</p>
+                <h3>Guardianes del Planeta:</h3>
                 <ul>
-                    <li><strong>Árbol 🌳:</strong></strong> Frena enemigos y dispara “hojas verdes”.</li>
+                    <li><strong>Árbol 🌳:</strong> Frena enemigos y dispara “hojas verdes”.</li>
                     <li><strong>Panel solar:</strong> No ataca, pero genera más energía verde.</li>
                     <li><strong>Bicicleta 🚲:</strong> Dispara rápido y debilita el humo.</li>
                     <li><strong>Contenedor Plástico:</strong> Recicla enemigos de plástico.</li>
                     <li><strong>Contenedor Orgánico:</strong> Recicla enemigos de basura orgánica.</li>
-                    <li><strong>Contenedor Comunes:</strong> Recolecta enemigos de desechos comunes.</li>
+                    <li><strong>Contenedor Comunes:</strong> Recolecta enemigos de desechos material no aprovechable.</li>
                     <li><strong>Contenedor Vidrio/Metal:</strong> Neutraliza enemigos de vidrio y metal.</li>
                     <li><strong>Contenedor Papel:</strong> Recicla enemigos de papel y cartón.</li>
-                    <li><strong>Contenedor Especiales:</strong> Neutraliza enemigos especiales como neumáticos.</li>
+                    <li><strong>Contenedor Especiales:</strong> Neutraliza enemigos especiales como neumáticos, electrónicos.</li>
                     <li><strong>Contenedor Peligrosos:</strong> Neutraliza enemigos peligrosos como residuos de hospital.</li>
                 </ul>
                 <button id="startGameBtn" class="fallback-button" style="width: 100%;">¡A Jugar!</button>
@@ -371,7 +371,7 @@
             <div class="modal-body">
                 <iframe id="resourceIframe" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
                 <div id="iframeFallback" class="iframe-fallback">
-                    <p>Este contenido no se puede mostrar aquí.</p>
+                    <p>Cargando Página.</p>
                     <button id="fallbackBtn" class="fallback-button">Abrir en nueva pestaña</button>
                 </div>
             </div>
@@ -425,18 +425,18 @@
             { id: "residuos_especiales", vida: 20, velocidad: 0.15, puntos: 50, imagen: 'residuos_especiales', ancho: 90, alto: 70, afecta: "contenedor_especiales" },
             { id: "residuos_peligrosos", vida: 25, velocidad: 0.1, puntos: 75, imagen: 'residuos_peligrosos', ancho: 90, alto: 90, afecta: "contenedor_peligrosos" },
             { id: "fabrica", vida: 30, velocidad: 0.1, puntos: 100, esJefe: true, imagen: 'fabrica', ancho: 100, alto: 100 },
-            { id: "monstruo_basura", vida: 50, velocidad: 0.08, puntos: 250, esJefe: true, imagen: 'monstruo_basura', ancho: 120, alto: 90 }
+            { id: "monstruo_basura", vida: 50, velocidad: 0.08, puntos: 250, esJefe: true, imagen: 'monstruo_basura', ancho: 120, alto: 80 }
         ];
 
         const DEFENSORES = [
-            { id: "arbol", nombre: "Árbol", costo: 50, vida: 10, ataque: 1, cadencia: 1500, rango: 250, imagen: 'arbol', ancho: 70, alto: 70, oleada: 1 },
+            { id: "arbol", nombre: "Árbol", costo: 50, vida: 10, ataque: 1, cadencia: 1500, rango: 250, imagen: 'arbol', ancho: 70, alto: 70, oleada: 1, afecta_a: ["plastico", "humo", "agua", "basura_organica", "desecho_comun", "vidrio_metal", "papel_carton", "residuos_especiales", "residuos_peligrosos", "fabrica", "monstruo_basura"] },
             { id: "panel", nombre: "Panel Solar", costo: 25, vida: 5, energiaExtra: 15, cadencia: 5000, imagen: 'panel', ancho: 50, alto: 50, oleada: 1 },
-            { id: "bicicleta", nombre: "Bicicleta", costo: 75, vida: 7, ataque: 0.5, cadencia: 500, rango: 300, imagen: 'bicicleta', ancho: 60, alto: 40, oleada: 1 },
-            { id: "contenedor_plastico", nombre: "Plástico", costo: 100, vida: 20, efecto: "neutraliza", target: "plastico", imagen: 'contenedor_plastico', ancho: 50, alto: 50, oleada: 1 },
+            { id: "bicicleta", nombre: "Bicicleta", costo: 75, vida: 7, ataque: 0.5, cadencia: 500, rango: 400, imagen: 'bicicleta', ancho: 60, alto: 40, oleada: 1, afecta_a: ["humo", "agua", "fabrica", "monstruo_basura"] },
+            { id: "contenedor_plastico", nombre: "Plástico", costo: 50, vida: 20, efecto: "neutraliza", target: "plastico", imagen: 'contenedor_plastico', ancho: 50, alto: 50, oleada: 1 },
             { id: "contenedor_organico", nombre: "Orgánico", costo: 120, vida: 20, efecto: "neutraliza", target: "basura_organica", imagen: 'contenedor_organico', ancho: 50, alto: 50, oleada: 2 },
-            { id: "contenedor_comun", nombre: "Comunes", costo: 150, vida: 25, efecto: "neutraliza", target: "desecho_comun", imagen: 'contenedor_comun', ancho: 50, alto: 50, oleada: 3 },
+            { id: "contenedor_comun", nombre: "Desechos", costo: 150, vida: 25, efecto: "neutraliza", target: "desecho_comun", imagen: 'contenedor_comun', ancho: 50, alto: 50, oleada: 3 },
             { id: "contenedor_vidrio_metal", nombre: "Vidrio/Metal", costo: 175, vida: 30, efecto: "neutraliza", target: "vidrio_metal", imagen: 'contenedor_vidrio_metal', ancho: 50, alto: 50, oleada: 4 },
-            { id: "contenedor_papel", nombre: "Papel", costo: 175, vida: 20, efecto: "neutraliza", target: "papel_carton", imagen: 'contenedor_papel', ancho: 50, alto: 50, oleada: 4 },
+            { id: "contenedor_papel", nombre: "Papel/cartón", costo: 175, vida: 20, efecto: "neutraliza", target: "papel_carton", imagen: 'contenedor_papel', ancho: 50, alto: 50, oleada: 4 },
             { id: "contenedor_especiales", nombre: "Especiales", costo: 250, vida: 40, efecto: "neutraliza", target: "residuos_especiales", imagen: 'contenedor_especiales', ancho: 50, alto: 50, oleada: 5 },
             { id: "contenedor_peligrosos", nombre: "Peligrosos", costo: 300, vida: 40, efecto: "neutraliza", target: "residuos_peligrosos", imagen: 'contenedor_peligrosos', ancho: 50, alto: 50, oleada: 5 }
         ];
@@ -470,40 +470,30 @@
         ];
         
         const OLEADAS = [
-            // Oleada 1: Plástico, Humo y Agua
             { enemigos: ["plastico", "plastico", "plastico", "humo", "plastico", "humo", "agua", "agua"] },
-            // Oleada 2: Introducción de Contenedor Orgánico
             { enemigos: ["plastico", "humo", "agua", "basura_organica", "plastico", "humo", "agua", "basura_organica", "basura_organica"] },
-            // Oleada 3: Introducción de Contenedor de Desechos Comunes
             { enemigos: ["agua", "desecho_comun", "humo", "plastico", "desecho_comun", "plastico", "agua", "desecho_comun", "humo", "desecho_comun"] },
-            // Oleada 4: Introducción de Contenedores de Vidrio/Metal y Papel/Cartón
             { enemigos: ["plastico", "humo", "vidrio_metal", "agua", "papel_carton", "agua", "plastico", "humo", "vidrio_metal", "papel_carton", "fabrica"] },
-            // Oleada 5: Batalla Final con Residuos Especiales y Peligrosos
             { enemigos: ["agua", "humo", "fabrica", "residuos_especiales", "desecho_comun", "vidrio_metal", "residuos_peligrosos", "plastico", "monstruo_basura"] }
         ];
 
         const ENTORNOS = [
-            // Oleada 1: Jardín Escolar
             { tierra: '#a98467', pasto: '#6a994e', cielo: '#87CEEB', detalles: null },
-            // Oleada 2: Parque Urbano
             { tierra: '#b0b0b0', pasto: '#76b852', cielo: '#a7d7f9', detalles: (ctx) => {
-                ctx.fillStyle = '#888'; ctx.fillRect(100, 290, 800, 20);
+                ctx.fillStyle = '#888'; ctx.fillRect(0, 290, 800, 20);
             }},
-            // Oleada 3: Playa Contaminada
             { tierra: '#f4e1c1', pasto: '#0077be', cielo: '#87CEEB', detalles: (ctx) => {
-                ctx.fillStyle = '#6ab5d8'; ctx.fillRect(100, 0, 800, 50);
-                ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.fillRect(100, 50, 800, 10);
+                ctx.fillStyle = '#6ab5d8'; ctx.fillRect(0, 0, 800, 50);
+                ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.fillRect(0, 50, 800, 10);
             }},
-            // Oleada 4: Río Sucio
             { tierra: '#6b4f2e', pasto: '#2e4c3b', cielo: '#b0c4de', detalles: (ctx) => {
                 ctx.strokeStyle = '#251a0e'; ctx.lineWidth = 3; 
                 ctx.beginPath();
-                ctx.moveTo(100, 100); ctx.lineTo(900, 120);
-                ctx.moveTo(100, 300); ctx.lineTo(900, 280);
-                ctx.moveTo(100, 500); ctx.lineTo(900, 510);
+                ctx.moveTo(0, 100); ctx.lineTo(800, 120);
+                ctx.moveTo(0, 300); ctx.lineTo(800, 280);
+                ctx.moveTo(0, 500); ctx.lineTo(800, 510);
                 ctx.stroke();
             }},
-            // Oleada 5: Vertedero
             { tierra: '#5d5550', pasto: '#444', cielo: '#888', detalles: (ctx) => {
                 ctx.fillStyle = 'rgba(0,0,0,0.15)';
                 ctx.beginPath();
@@ -518,16 +508,15 @@
             energiaInicial: 100,
             puntosBonus: 100,
             puntosPenalizacion: -50,
-            tiempoMinActividad: 10, // segundos
+            tiempoMinActividad: 10,
             energiaAutomatica: 5,
-            intervaloEnergia: 2500 // ms
+            intervaloEnergia: 2500
         };
 
         // ===================================================================================
         // ========================== FIN DE LA PERSONALIZACIÓN ==============================
         // ===================================================================================
 
-        // Elementos del DOM
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const energiaVerdeEl = document.getElementById('energiaVerde');
@@ -550,14 +539,9 @@
         const startGameBtn = document.getElementById('startGameBtn');
         const waveProgressBar = document.getElementById('waveProgressBar');
 
-        // Estado del juego
         let gameState = {};
+        //let imagenes = {};
 
-        // Audio
-        let audioCtx;
-        let autoEnergyInterval;
-        
-        // --- FUNCIONES DE CARGA DE RECURSOS ---
         function loadImages() {
             let loadedCount = 0;
             const totalImages = Object.keys(RECURSOS_GRAFICOS).length;
@@ -576,7 +560,7 @@
                         console.error(`Error al cargar la imagen: ${RECURSOS_GRAFICOS[key]}`);
                         loadedCount++;
                         if (loadedCount === totalImages) {
-                            resolve(); // Continuar aunque haya errores para no bloquear el juego
+                            resolve();
                         }
                     };
                     img.src = RECURSOS_GRAFICOS[key];
@@ -584,7 +568,8 @@
             });
         }
 
-        // --- FUNCIONES DE AUDIO CON WEBAUDIO API ---
+        let audioCtx;
+        let autoEnergyInterval;
         function initAudio() {
             try {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -601,26 +586,26 @@
             gainNode.connect(audioCtx.destination);
 
             switch (type) {
-                case 'recolectar': // ding
+                case 'recolectar':
                     oscillator.type = 'triangle';
                     oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
                     gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
                     break;
-                case 'colocar': // pop
+                case 'colocar':
                     oscillator.type = 'sine';
                     oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
                     gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
                     break;
-                case 'derrotar': // whoosh
+                case 'derrotar':
                     oscillator.type = 'square';
                     oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
                     oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
                     gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
                     break;
-                case 'error': // buzz
+                case 'error':
                     oscillator.type = 'sawtooth';
                     oscillator.frequency.setValueAtTime(120, audioCtx.currentTime);
                     gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
@@ -633,7 +618,7 @@
         
         // --- INICIALIZACIÓN DEL JUEGO ---
         function initGame() {
-            canvas.width = 900;
+            canvas.width = 800;
             canvas.height = 600;
 
             if (autoEnergyInterval) clearInterval(autoEnergyInterval);
@@ -642,7 +627,7 @@
                 energia: OPCIONES.energiaInicial,
                 puntos: 0,
                 oleadaActual: 0,
-                grid: createGrid(5, 9),
+                grid: createGrid(5, 8),
                 defensores: [],
                 enemigos: [],
                 proyectiles: [],
@@ -662,7 +647,6 @@
             updateHUD();
             startOleada();
             
-            // Iniciar generación automática de energía
             autoEnergyInterval = setInterval(() => {
                 if (!gameState.paused && !gameState.gameOver) {
                     gameState.energia += OPCIONES.energiaAutomatica;
@@ -680,7 +664,7 @@
             for (let y = 0; y < rows; y++) {
                 grid[y] = [];
                 for (let x = 0; x < cols; x++) {
-                    grid[y][x] = null; // Celda vacía
+                    grid[y][x] = null;
                 }
             }
             return grid;
@@ -688,14 +672,12 @@
 
         function populateDefendersMenu() {
             defendersMenuEl.innerHTML = '';
-            // Aseguramos que solo se muestren los defensores disponibles para la oleada actual
             const defensoresDisponibles = DEFENSORES.filter(d => d.oleada <= (gameState.oleadaActual + 1));
             defensoresDisponibles.forEach(def => {
                 const card = document.createElement('div');
                 card.className = 'defender-card';
                 card.dataset.id = def.id;
                 
-                // Usamos la propiedad de imagen para el ícono del menú
                 const iconHtml = `<div class="defender-icon"><img src="${RECURSOS_GRAFICOS[def.imagen]}" alt="${def.nombre}"></div>`;
 
                 card.innerHTML = `
@@ -711,7 +693,7 @@
         // --- LÓGICA DE OLEADAS Y ENEMIGOS ---
         function startOleada() {
             if (gameState.oleadaActual >= OLEADAS.length) {
-                endGame(true); // Ganó el juego
+                endGame(true);
                 return;
             }
             
@@ -719,7 +701,7 @@
             gameState.totalEnemigosOleada = oleada.enemigos.length;
             gameState.enemigosDerrotadosOleada = 0;
             updateWaveProgress();
-            populateDefendersMenu(); // Actualizar menú de defensores
+            populateDefendersMenu();
             
             let spawnDelay = 1000;
             oleada.enemigos.forEach(tipoEnemigo => {
@@ -733,13 +715,13 @@
 
         function spawnEnemy(tipo) {
             const enemigoData = ENEMIGOS.find(e => e.id === tipo);
-            if (!enemigoData) return; // Evita errores si no se encuentra el enemigo
+            if (!enemigoData) return;
             const fila = Math.floor(Math.random() * 5);
             const y = fila * 100 + 50;
             
             gameState.enemigos.push({
                 ...enemigoData,
-                x: canvas.width,
+                x: canvas.width + 50,
                 y: y,
                 fila: fila,
                 maxVida: enemigoData.vida,
@@ -753,7 +735,7 @@
                 const resource = RECURSOS_EDUCATIVOS[gameState.oleadaActual - 1];
                 openRecurso(resource);
             } else {
-                endGame(true); // Ganó el juego
+                endGame(true);
             }
         }
         
@@ -778,7 +760,7 @@
                 gameState.energia -= defenderData.costo;
                 const newDefender = {
                     ...defenderData,
-                    x: gridX * 100 + 150,
+                    x: gridX * 100 + 50,
                     y: gridY * 100 + 50,
                     gridX,
                     gridY,
@@ -797,7 +779,7 @@
         // --- BUCLE PRINCIPAL DEL JUEGO ---
         function gameLoop(timestamp) {
             if (gameState.gameOver) {
-                return; // Detiene el bucle si el juego ha terminado
+                return;
             }
 
             if (!gameState.lastFrameTime) gameState.lastFrameTime = timestamp;
@@ -823,13 +805,19 @@
                         createParticle(def.x, def.y - 20, `+${def.energiaExtra}🍃`, '#f9c74f');
                         updateHUD();
                     }
-                    if ((def.id === 'arbol' || def.id === 'bicicleta') && hayEnemigoEnFila(def.gridY, def.x, def.rango)) {
-                        gameState.proyectiles.push({
-                            x: def.x + 20, y: def.y, damage: def.ataque,
-                            speed: def.id === 'bicicleta' ? 300 : 150,
-                            imagen: def.id === 'bicicleta' ? 'proyectil_engranaje' : 'proyectil_hoja',
-                            fila: def.gridY
-                        });
+                    if (def.afecta_a) {
+                        const enemigoEnFila = gameState.enemigos.find(e => 
+                            e.fila === def.gridY && e.x > def.x && e.x < def.x + def.rango && def.afecta_a.includes(e.id)
+                        );
+                        if (enemigoEnFila) {
+                            gameState.proyectiles.push({
+                                x: def.x + 20, y: def.y, damage: def.ataque,
+                                speed: def.id === 'bicicleta' ? 300 : 150,
+                                imagen: def.id === 'bicicleta' ? 'proyectil_engranaje' : 'proyectil_hoja',
+                                fila: def.gridY,
+                                afecta_a: def.afecta_a
+                            });
+                        }
                     }
                 }
             });
@@ -841,8 +829,8 @@
             // Actualizar enemigos
             gameState.enemigos.forEach(enemigo => {
                 enemigo.x -= enemigo.velocidad * 60 * dt;
-                if (enemigo.x < 100) {
-                    endGame(false); // Perdió el juego
+                if (enemigo.x < 0) {
+                    endGame(false);
                 }
             });
 
@@ -875,8 +863,7 @@
                 const p = gameState.proyectiles[i];
                 for (let j = gameState.enemigos.length - 1; j >= 0; j--) {
                     const e = gameState.enemigos[j];
-                    // Colisión con enemigos
-                    if (p.fila === e.fila && Math.abs(p.x - e.x) < 20) {
+                    if (p.fila === e.fila && Math.abs(p.x - e.x) < 20 && p.afecta_a.includes(e.id)) {
                         e.vida -= p.damage;
                         gameState.proyectiles.splice(i, 1);
                         if (e.vida <= 0) {
@@ -887,17 +874,16 @@
                             createParticle(e.x, e.y, `+${e.puntos}🌍`, '#80ed99');
                             gameState.enemigos.splice(j, 1);
                         }
-                        break; // Proyectil solo golpea a un enemigo
+                        break;
                     }
                 }
             }
 
             gameState.enemigos.forEach(e => {
-                const gridX = Math.floor((e.x - 100) / 100);
-                if (gridX < 0 || gridX > 8) return;
+                const gridX = Math.floor(e.x / 100);
+                if (gridX < 0 || gridX > 7) return;
                 const def = gameState.grid[e.fila][gridX];
-                // Colisión con defensores
-                if (def && Math.abs(e.x - def.x) < 30) {
+                if (def && Math.abs(e.x - (def.gridX * 100 + 50)) < 30) {
                     if (def.efecto === "neutraliza" && def.target === e.id) {
                         gameState.puntos += e.puntos * 2;
                         gameState.enemigosDerrotadosOleada++; 
@@ -924,24 +910,23 @@
         function drawBackground() {
             const entorno = ENTORNOS[Math.min(gameState.oleadaActual, ENTORNOS.length - 1)];
             document.body.style.backgroundColor = entorno.cielo;
+            
             ctx.fillStyle = entorno.tierra;
-            ctx.fillRect(100, 0, canvas.width - 100, canvas.height);
-            ctx.fillStyle = entorno.pasto;
-            ctx.fillRect(0, 0, 100, canvas.height);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
             if (entorno.detalles) {
                 entorno.detalles(ctx);
             }
         }
 
-        // --- RENDERIZADO DEL JUEGO ---
         function renderGame() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawBackground();
 
             for (let y = 0; y < 5; y++) {
-                for (let x = 0; x < 9; x++) {
+                for (let x = 0; x < 8; x++) {
                     ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-                    ctx.strokeRect(x * 100 + 100, y * 100, 100, 100);
+                    ctx.strokeRect(x * 100, y * 100, 100, 100);
                 }
             }
 
@@ -993,7 +978,6 @@
             gameState.paused = true;
             pauseStatusEl.textContent = '⏸️';
 
-            // Extraer el ID del video de YouTube del enlace largo o corto
             let videoId;
             const youtubeRegex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([^?&\n]+)/;
             const match = recurso.url.match(youtubeRegex);
@@ -1001,7 +985,6 @@
                 videoId = match[1];
             }
 
-            // Construir la URL de incrustación (embed URL)
             const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}` : recurso.url;
 
             modalTitleEl.textContent = recurso.titulo;
@@ -1044,7 +1027,6 @@
             startOleada();
         }
 
-        // --- UTILIDADES Y MANEJO DE ESTADO ---
         function updateHUD() {
             energiaVerdeEl.textContent = gameState.energia;
             puntosAmbientalesEl.textContent = gameState.puntos;
@@ -1088,19 +1070,16 @@
             audioStatusEl.textContent = gameState.muted ? '🔇' : '🔊';
         }
 
-        // --- EVENT LISTENERS ---
         canvas.addEventListener('click', (e) => {
             if (gameState.paused || !gameState.selectedDefender) return;
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             
-            if (x > 100) {
-                const gridX = Math.floor((x - 100) / 100);
-                const gridY = Math.floor(y / 100);
-                if (gridX < 9 && gridY < 5) {
-                    placeDefender(gridX, gridY);
-                }
+            const gridX = Math.floor(x / 100);
+            const gridY = Math.floor(y / 100);
+            if (gridX < 8 && gridY < 5) {
+                placeDefender(gridX, gridY);
             }
         });
         
@@ -1109,7 +1088,6 @@
 
         startGameBtn.addEventListener('click', () => {
             startModalEl.style.display = 'none';
-            // Inicia el juego una vez que las imágenes se cargan
             loadImages().then(() => initGame());
         });
         
@@ -1122,7 +1100,6 @@
             }
         });
 
-        // --- INICIO ---
         window.onload = () => {
             initAudio();
             startModalEl.style.display = 'flex';
@@ -1136,7 +1113,7 @@
         1. AÑADIR NUEVOS DEFENSORES:
            - Ve al bloque "PERSONALIZA AQUÍ".
            - En el array `DEFENSORES`, añade un nuevo objeto con las propiedades:
-             `id`, `nombre`, `imagen` (de RECURSOS_GRAFICOS), `costo`, `vida`, `ancho`, `alto`.
+             `id`, `nombre`, `imagen` (de RECURSOS_GRAFICOS), `costo`, `vida`, `ancho`, `alto`, `oleada`.
            - Si ataca, añade `ataque`, `cadencia` (en ms) y `rango`.
            - Si genera energía, añade `energiaExtra` y `cadencia`.
            - El juego lo añadirá automáticamente al menú.
