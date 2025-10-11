@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defensores del Jardín - Admin</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f7f9fc; color: #333; }
+        
+        /* Estilos para el Modal de Login */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 83, 14, 0.411);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .modal-content h2 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: #386641;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background-color: #2a9d8f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-login:hover {
+            background-color: #248a7f;
+        }
+
+        /* Estilos del Panel de Admin */
+        .container { max-width: 1400px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { color: #386641; border-bottom: 2px solid #a7c957; padding-bottom: 10px; }
+        .filter-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: flex-end; margin-bottom: 25px; padding: 20px; background-color: #f1f5f9; border-radius: 8px; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .filter-group input, .filter-group select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
+        .button-group { display: flex; gap: 10px; margin-top: 10px; }
+        button { padding: 12px 18px; cursor: pointer; color: white; border: none; border-radius: 5px; font-weight: bold; transition: background-color 0.2s; }
+        .btn-filter { background-color: #2a9d8f; }
+        .btn-filter:hover { background-color: #248a7f; }
+        .btn-download { background-color: #1d7b43; }
+        .btn-download:hover { background-color: #176336; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 14px; }
+        th { background-color: #a7c957; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+
+    <div id="loginModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Acceso de Administrador</h2>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="email">Correo Electrónico:</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Contraseña:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn-login">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="adminContent" style="display: none; padding: 20px;">
+        <div class="container">
+            <h1>Panel de Administración - Sesiones de Juego</h1>
+
+            <div class="filter-container">
+                <div class="filter-group">
+                    <label for="filterNombre">Nombre del Jugador:</label>
+                    <input type="text" id="filterNombre" placeholder="Buscar por nombre...">
+                </div>
+                <div class="filter-group">
+                    <label for="filterCedula">Cédula:</label>
+                    <input type="text" id="filterCedula" placeholder="Buscar por cédula...">
+                </div>
+                <div class="filter-group">
+                    <label for="filterInstitucion">Institución:</label>
+                    <input type="text" id="filterInstitucion" placeholder="Buscar por institución...">
+                </div>
+                <div class="filter-group">
+                    <label for="filterEstado">Estado de la Partida:</label>
+                    <select id="filterEstado">
+                        <option value="">Todos</option>
+                        <option value="VICTORY">Victoria</option>
+                        <option value="GAME_OVER">Derrota (Game Over)</option>
+                        <option value="IN_PROGRESS">En Progreso</option>
+                    </select>
+                </div>
+                 <div class="filter-group">
+                    <label for="filterPuntuacion">Puntuación Mínima:</label>
+                    <input type="number" id="filterPuntuacion" placeholder="Ej: 500">
+                </div>
+                <div class="filter-group">
+                    <label for="startDate">Fecha Inicio:</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="filter-group">
+                    <label for="endDate">Fecha Fin:</label>
+                    <input type="date" id="endDate">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="fetchData()" class="btn-filter">🔍 Filtrar y Actualizar</button>
+                <button onclick="downloadExcel()" class="btn-download">📄 Descargar Reporte (Excel)</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Cédula</th>
+                        <th>Correo</th>
+                        <th>Teléfono</th>
+                        <th>Institución</th>
+                        <th>Puntuación Final</th>
+                        <th>Duración (seg)</th>
+                        <th>Estado</th>
+                        <th>Hora Inicio</th>
+                    </tr>
+                </thead>
+                <tbody id="dataBody">
+                </tbody>
+            </table>
+            <p id="loadingMessage">Esperando inicio de sesión...</p>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0BaEf-BzEimDtzEGfvjj_BIfEKSoo-Q0", 
+            authDomain: "guardianesdelplaneta-f20d3.firebaseapp.com",
+            projectId: "guardianesdelplaneta-f20d3",
+            storageBucket: "guardianesdelplaneta-f20d3.appspot.com",
+            messagingSenderId: "337026321003",
+            appId: "1:337026321003:web:ab709851e1749f9968bf2e"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const dataBody = document.getElementById('dataBody');
+        const loadingMessage = document.getElementById('loadingMessage');
+
+        let cachedData = [];
+
+        async function getFilteredData() {
+            loadingMessage.textContent = "Cargando y filtrando datos...";
+            
+            const nombreVal = document.getElementById('filterNombre').value.toLowerCase();
+            const cedulaVal = document.getElementById('filterCedula').value;
+            const institucionVal = document.getElementById('filterInstitucion').value.toLowerCase();
+            const estadoVal = document.getElementById('filterEstado').value;
+            const puntuacionVal = document.getElementById('filterPuntuacion').value;
+            const startDateEl = document.getElementById('startDate').value;
+            const endDateEl = document.getElementById('endDate').value;
+            
+            let query = db.collection('game_sessions').orderBy('startTime', 'desc');
+
+            if (startDateEl) {
+                const startTimestamp = firebase.firestore.Timestamp.fromDate(new Date(startDateEl));
+                query = query.where('startTime', '>=', startTimestamp);
+            }
+            if (endDateEl) {
+                const endDay = new Date(endDateEl);
+                endDay.setDate(endDay.getDate() + 1);
+                const endTimestamp = firebase.firestore.Timestamp.fromDate(endDay);
+                query = query.where('startTime', '<', endTimestamp);
+            }
+            
+            const snapshot = await query.get();
+            const sessions = [];
+            snapshot.forEach(doc => sessions.push(doc.data()));
+
+            const filteredSessions = sessions.filter(session => {
+                const nombreMatch = !nombreVal || (session.nombre && session.nombre.toLowerCase().includes(nombreVal));
+                const cedulaMatch = !cedulaVal || (session.cedula && session.cedula.includes(cedulaVal));
+                const institucionMatch = !institucionVal || (session.institucion && session.institucion.toLowerCase().includes(institucionVal));
+                const puntuacionMatch = !puntuacionVal || session.finalScore >= parseInt(puntuacionVal, 10);
+                const estadoMatch = !estadoVal || session.status === estadoVal;
+                
+                return nombreMatch && cedulaMatch && institucionMatch && puntuacionMatch && estadoMatch;
+            });
+            
+            return filteredSessions;
+        }
+
+        async function fetchData() {
+            try {
+                cachedData = await getFilteredData();
+                displayData(cachedData);
+                loadingMessage.textContent = `Total de sesiones encontradas: ${cachedData.length}`;
+            } catch (error) {
+                console.error("Error al obtener datos:", error);
+                loadingMessage.textContent = "ERROR: No se pudieron cargar los datos. Revisa la consola y las reglas de Firebase.";
+                cachedData = [];
+            }
+        }
+
+        function displayData(sessions) {
+            dataBody.innerHTML = '';
+            sessions.forEach(session => {
+                const row = dataBody.insertRow();
+                const startTimeDate = session.startTime ? session.startTime.toDate().toLocaleString('es-ES') : 'N/A';
+
+                row.insertCell().textContent = session.nombre || 'Anónimo';
+                row.insertCell().textContent = session.cedula || 'N/A';
+                row.insertCell().textContent = session.correo || 'N/A';
+                row.insertCell().textContent = session.telefono || 'N/A';
+                row.insertCell().textContent = session.institucion || 'N/A';
+                row.insertCell().textContent = session.finalScore;
+                row.insertCell().textContent = session.durationSeconds > 0 ? session.durationSeconds : 'En curso/N/A';
+                row.insertCell().textContent = session.status;
+                row.insertCell().textContent = startTimeDate;
+            });
+        }
+        
+        function downloadExcel() {
+            loadingMessage.textContent = "Preparando descarga...";
+            
+            if (cachedData.length === 0) {
+                loadingMessage.textContent = "No hay datos para descargar con los filtros actuales.";
+                alert("No hay datos para descargar. Por favor, ajusta los filtros y actualiza la tabla primero.");
+                return;
+            }
+
+            const dataForExcel = cachedData.map(session => ({
+                'Nombre del Jugador': session.nombre || 'Anónimo',
+                'Cédula': session.cedula || 'N/A',
+                'Correo': session.correo || 'N/A',
+                'Teléfono': session.telefono || 'N/A',
+                'Institución': session.institucion || 'N/A',
+                'Puntuación Final': session.finalScore,
+                'Duración (segundos)': session.durationSeconds > 0 ? session.durationSeconds : 0,
+                'Estado': session.status,
+                'Fecha de Inicio': session.startTime ? session.startTime.toDate().toLocaleString('es-ES') : 'N/A'
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte de Sesiones");
+
+            XLSX.writeFile(workbook, "Reporte_GuardianesDelPlaneta.xlsx");
+
+            loadingMessage.textContent = `Descarga completada de ${cachedData.length} registros.`;
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // --- Credenciales (puedes cambiarlas aquí) ---
+            const correctEmail = "admin@admin.com";
+            const correctPassword = "password123";
+            // ---------------------------------------------
+
+            if (email === correctEmail && password === correctPassword) {
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                fetchData(); // Carga los datos solo después del login exitoso
+            } else {
+                alert("Correo o contraseña incorrectos. Inténtelo de nuevo.");
+            }
+        }
+
+        window.onload = () => {
+            document.getElementById('loginModal').style.display = 'flex';
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+        }
+    </script>
+</body>
+</html>
