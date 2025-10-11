@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Defensores del Jardín</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
         /* Estilos generales y de layout */
         :root {
@@ -104,7 +106,7 @@
             max-height: 40px;
             max-width: 150px;
             object-fit: contain;
-            margin-right: 30px;
+            margin-right: 40px;
         }
 
         /* Barra de progreso de oleada */
@@ -236,6 +238,24 @@
             width: 800px; 
             max-width: 90%; 
             height: 500px;
+            position: relative;
+        }
+
+        /* ✅ Añade este nuevo estilo para el botón */
+        .modal-admin-link {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 14px;
+            background-color: #7f8c8d;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        .modal-admin-link:hover {
+            background-color: #95a5a6;
         }
         
         /* ESTILO ESPECÍFICO PARA EL MODAL DE BIENVENIDA (Más pequeño) */
@@ -243,7 +263,7 @@
             width: 550px; 
             max-width: 90%;
             height: auto; /* Altura ajustada al contenido */
-            max-height: 550px; /* Menor que 600px */
+            max-height: 80vh; /* Límite de altura para que no sea demasiado grande */
         }
         
         /* Habilitar el scroll dentro del cuerpo del modal */
@@ -363,7 +383,7 @@
                 </div>
                 
                 <div class="game-logo" id="gameLogo">
-                    <img src="https://raw.githubusercontent.com/lennin1219/JuegoPlantsVSzombies/main/itcaverdeblanco.png" alt="">
+                    <img src="https://raw.githubusercontent.com/lennin1219/JuegoPlantsVSzombies/main/mi_logo.png" alt="Mi Logo del Juego">
                     <span>Guardianes del Planeta</span>
                 </div>
             
@@ -394,6 +414,41 @@
         </div>
     
 
+        <div id="registrationModal" class="modal-overlay">
+            <div class="modal-content start-modal-size">
+                <a href="admin.html" target="_blank" class="modal-admin-link">Administrador</a>
+                <div class="modal-header">
+                    <h2 class="modal-title">Registro de Jugador</h2>
+                </div>
+                <div class="modal-body" style="text-align: left;">
+                    <p>Para comenzar a jugar y registrar tus logros ambientales, por favor ingresa tus datos.</p>
+                    <form id="registroForm">
+                        <div style="margin-bottom: 10px;">
+                            <label for="nombreUsuario">Nombre Completo:</label>
+                            <input type="text" id="nombreUsuario" required style="width: 95%; padding: 8px; margin-top: 5px;">
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label for="cedulaUsuario">Cédula:</label>
+                            <input type="text" id="cedulaUsuario" required pattern="\d{10}" title="Por favor, ingrese 10 dígitos numéricos." style="width: 95%; padding: 8px; margin-top: 5px;">
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label for="correoUsuario">Correo Electrónico:</label>
+                            <input type="email" id="correoUsuario" required style="width: 95%; padding: 8px; margin-top: 5px;">
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label for="telefonoUsuario">Teléfono:</label>
+                            <input type="tel" id="telefonoUsuario" required style="width: 95%; padding: 8px; margin-top: 5px;">
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label for="institucionUsuario">Institución (Opcional):</label>
+                            <input type="text" id="institucionUsuario" style="width: 95%; padding: 8px; margin-top: 5px;">
+                        </div>
+                        <button type="submit" id="submitRegistroBtn" class="fallback-button" style="width: 100%;">Registrar y Jugar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
         <div id="startModal" class="modal-overlay">
             <div class="modal-content start-modal-size">
                 <div class="modal-header">
@@ -401,7 +456,7 @@
                 </div>
                 <div class="modal-body" style="text-align: left;">
                     <h3>Tu Misión:</h3>
-                    <p>Protege el jardín ITCA de las amenazas de la contaminación. Coloca defensores para detener a los enemigos que avanzan desde la derecha.</p>
+                    <p>Protege el Huerto del ITCA de las amenazas de la contaminación. Coloca defensores para detener a los enemigos que avanzan desde la derecha.</p>
                     <h3>Defensores Sostenibles:</h3>
                     <ul>
                         <li><div class="defender-icon-list"><img src="https://raw.githubusercontent.com/lennin1219/JuegoPlantsVSzombies/main/arbol.png" alt="Árbol Icono"></div> <strong>:</strong> Frena enemigos y dispara “hojas verdes”.</li>
@@ -596,9 +651,92 @@
         const startModalEl = document.getElementById('startModal');
         const startGameBtn = document.getElementById('startGameBtn');
         const waveProgressBar = document.getElementById('waveProgressBar');
+        const registrationModalEl = document.getElementById('registrationModal');
+        const registroForm = document.getElementById('registroForm');
+
 
         let gameState = {};
-        //let imagenes = {};
+
+        // ----------------------------------------------------------------------
+        // 🟢 FIREBASE LOGIC
+        // ----------------------------------------------------------------------
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0BaEf-BzEimDtzEGfvjj_BIfEKSoo-Q0", 
+            authDomain: "guardianesdelplaneta-f20d3.firebaseapp.com",
+            projectId: "guardianesdelplaneta-f20d3",
+            storageBucket: "guardianesdelplaneta-f20d3.appspot.com",
+            messagingSenderId: "337026321003",
+            appId: "1:337026321003:web:ab709851e1749f9968bf2e"
+        };
+        
+        let db = null;
+
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+        } catch (error) {
+            console.error("Error al inicializar Firebase. Revisa tus credenciales. El juego continuará sin guardar datos.", error);
+        }
+        
+        let currentGameRecordId = null;
+        let gameStartTime = null;
+
+        // ✅ Objeto currentUser actualizado para incluir la cédula
+        let currentUser = {
+            nombre: '',
+            cedula: '',
+            correo: '',
+            telefono: '',
+            institucion: ''
+        };
+        
+        // ✅ Función startNewGameSession actualizada para incluir la cédula
+        function startNewGameSession() {
+            if (!db || !currentUser.nombre) {
+                console.warn("Firebase no conectado o usuario no registrado. Jugando sin guardar sesión.");
+                return;
+            }
+
+            gameStartTime = firebase.firestore.Timestamp.now();
+
+            db.collection('game_sessions').add({
+                nombre: currentUser.nombre,
+                cedula: currentUser.cedula,
+                correo: currentUser.correo,
+                telefono: currentUser.telefono,
+                institucion: currentUser.institucion,
+                startTime: gameStartTime,
+                endTime: null,
+                durationSeconds: 0,
+                finalScore: 0,
+                status: 'IN_PROGRESS'
+            })
+            .then((docRef) => {
+                currentGameRecordId = docRef.id;
+                console.log("Nueva sesión de juego iniciada con ID: ", currentGameRecordId);
+            })
+            .catch((error) => {
+                console.error("Error al iniciar nueva sesión: ", error);
+            });
+        }
+
+        // ✅ El formulario ahora guarda la cédula en el objeto currentUser
+        registroForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            currentUser.nombre = document.getElementById('nombreUsuario').value;
+            currentUser.cedula = document.getElementById('cedulaUsuario').value;
+            currentUser.correo = document.getElementById('correoUsuario').value;
+            currentUser.telefono = document.getElementById('telefonoUsuario').value;
+            currentUser.institucion = document.getElementById('institucionUsuario').value;
+            
+            startNewGameSession();
+            
+            registrationModalEl.style.display = 'none';
+            startModalEl.style.display = 'flex';
+        });
+
+        // ----------------------------------------------------------------------
 
         function loadImages() {
             let loadedCount = 0;
@@ -1105,10 +1243,30 @@
             gameState.gameOver = true;
             gameOverTextEl.textContent = isVictory ? "¡VICTORIA!" : "FIN DEL JUEGO";
             gameOverMessageEl.style.display = 'flex';
-        }
 
+            if (db && currentGameRecordId) {
+                const endTime = firebase.firestore.Timestamp.now();
+                const duration = endTime.seconds - gameStartTime.seconds;
+                
+                db.collection('game_sessions').doc(currentGameRecordId).update({
+                    endTime: endTime,
+                    durationSeconds: duration,
+                    finalScore: gameState.puntos,
+                    status: isVictory ? 'VICTORY' : 'GAME_OVER',
+                })
+                .then(() => {
+                    console.log("Datos de juego actualizados en Firebase!");
+                    currentGameRecordId = null; 
+                })
+                .catch((error) => {
+                    console.error("Error al actualizar el documento: ", error);
+                });
+            }
+        }
+        
         function restartGame() {
             gameOverMessageEl.style.display = 'none';
+            startNewGameSession();
             initGame();
         }
 
@@ -1117,7 +1275,7 @@
         }
 
         function togglePause() {
-            if (modalEl.style.display === 'flex' || startModalEl.style.display === 'flex' || gameState.gameOver) return;
+            if (modalEl.style.display === 'flex' || startModalEl.style.display === 'flex' || registrationModalEl.style.display === 'flex' || gameState.gameOver) return;
             gameState.paused = !gameState.paused;
             pauseMessageEl.style.display = gameState.paused ? 'block' : 'none';
             pauseStatusEl.textContent = gameState.paused ? '⏸️' : '▶️';
@@ -1131,27 +1289,20 @@
         canvas.addEventListener('click', (e) => {
             if (gameState.paused || !gameState.selectedDefender) return;
 
-            // 🎯 INICIO DE LA CORRECCIÓN DE COORDENADAS RESPONSIVE
             const gameWrapper = document.querySelector('.game-wrapper');
             const rect = gameWrapper.getBoundingClientRect();
             
-            // 1. Calcular el factor de escala
-            // Se usa el ancho visible actual del wrapper (rect.width) dividido por el ancho base (1010px)
             const scaleFactor = rect.width / 1010; 
 
-            // 2. Obtener la posición del clic relativa al wrapper (el área escalada)
             const clickX = e.clientX - rect.left;
             const clickY = e.clientY - rect.top;
 
-            // 3. Aplicar el factor de escala inverso (coordenada no escalada)
             const originalX = clickX / scaleFactor;
             const originalY = clickY / scaleFactor;
             
-            // 4. Transformar coordenadas: restar el ancho del MENÚ (210px) y la altura del HUD (50px)
             const canvasX = originalX - 210; 
             const canvasY = originalY - 50; 
 
-            // 5. Aplicar a la lógica del juego (coordenadas relativas al canvas 800x600)
             if (canvasX >= 0 && canvasX <= 800 && canvasY >= 0 && canvasY <= 600) {
                 const gridX = Math.floor(canvasX / 100);
                 const gridY = Math.floor(canvasY / 100);
@@ -1160,7 +1311,6 @@
                     placeDefender(gridX, gridY);
                 }
             }
-            // 🎯 FIN DE LA CORRECCIÓN DE COORDENADAS RESPONSIVE
         });
         
         modalCloseBtn.addEventListener('click', closeRecurso);
@@ -1182,49 +1332,8 @@
 
         window.onload = () => {
             initAudio();
-            startModalEl.style.display = 'flex';
+            registrationModalEl.style.display = 'flex';
         };
-
-        /*
-        ===================================================================================
-        === CÓMO PERSONALIZAR Y EXPANDIR EL JUEGO ===
-        ===================================================================================
-        
-        1. AÑADIR NUEVOS DEFENSORES:
-           - Ve al bloque "PERSONALIZA AQUÍ".
-           - En el array `DEFENSORES`, añade un nuevo objeto con las propiedades:
-             `id`, `nombre`, `imagen` (de RECURSOS_GRAFICOS), `costo`, `vida`, `ancho`, `alto`, `oleada`.
-           - Si ataca, añade `ataque`, `cadencia` (en ms) y `rango`.
-           - Si genera energía, añade `energiaExtra` y `cadencia`.
-           - El juego lo añadirá automáticamente al menú.
-
-        2. AÑADIR NUEVOS ENEMIGOS:
-           - En el array `ENEMIGOS`, añade un nuevo objeto con:
-             `id`, `imagen`, `vida`, `velocidad` (más bajo es más lento), `puntos`, `ancho`, `alto`.
-           - Si es un jefe, añade `esJefe: true` para que sea más grande.
-
-        3. MODIFICAR OLEADAS:
-           - En el array `OLEADAS`, cada objeto es una oleada.
-           - El array `enemigos` dentro de cada objeto define qué enemigos y en qué
-             orden aparecerán. Simplemente añade los `id` de los enemigos que quieras.
-
-        4. CAMBIAR RECURSOS EDUCATIVOS:
-           - En `RECURSOS_EDUCATIVOS`, modifica los objetos existentes o añade nuevos.
-           - `titulo`: El texto que aparecerá en el modal.
-           - `url`: ¡IMPORTANTE! Usa URLs con "embed" para videos de YouTube. Para
-             otras webs, asegúrate de que permitan ser mostradas en un <iframe>.
-             Si no, el juego mostrará la opción "Abrir en nueva pestaña".
-        
-        5. AJUSTAR LA DIFICULTAD:
-           - En el objeto `OPCIONES`, puedes cambiar:
-             - `energiaInicial`: Cuánta energía tienes al empezar.
-             - `energiaAutomatica` e `intervaloEnergia`: La velocidad a la que ganas
-               energía pasivamente.
-             - `puntosBonus` y `puntosPenalizacion`: Recompensas por ver los recursos.
-             - `tiempoMinActividad`: Segundos mínimos para obtener el bonus.
-        
-        ===================================================================================
-        */
     </script>
 </body>
 </html>
