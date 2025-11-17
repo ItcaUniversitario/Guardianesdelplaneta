@@ -241,7 +241,7 @@
             position: relative;
         }
 
-        /* ✅ Añade este nuevo estilo para el botón */
+        /* Enlace al panel de administración */
         .modal-admin-link {
             position: absolute;
             top: 15px;
@@ -423,13 +423,20 @@
                 <div class="modal-body" style="text-align: left;">
                     <p>Para comenzar a jugar y registrar tus logros ambientales, por favor ingresa tus datos.</p>
                     <form id="registroForm">
+                        
+                        <div style="margin-bottom: 10px;">
+                            <label for="cedulaUsuario">Cédula:</label>
+                            <div style="display: flex; gap: 5px;">
+                                <input type="text" id="cedulaUsuario" required pattern="\d{10}" title="Por favor, ingrese 10 dígitos numéricos." style="width: 75%; padding: 8px; margin-top: 5px;">
+                                <button type="button" onclick="checkExistingPlayer()" style="width: 25%; padding: 8px; margin-top: 5px; background-color: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                    Buscar
+                                </button>
+                            </div>
+                        </div>
+
                         <div style="margin-bottom: 10px;">
                             <label for="nombreUsuario">Nombre Completo:</label>
                             <input type="text" id="nombreUsuario" required style="width: 95%; padding: 8px; margin-top: 5px;">
-                        </div>
-                        <div style="margin-bottom: 10px;">
-                            <label for="cedulaUsuario">Cédula:</label>
-                            <input type="text" id="cedulaUsuario" required pattern="\d{10}" title="Por favor, ingrese 10 dígitos numéricos." style="width: 95%; padding: 8px; margin-top: 5px;">
                         </div>
                         <div style="margin-bottom: 10px;">
                             <label for="correoUsuario">Correo Electrónico:</label>
@@ -681,7 +688,7 @@
         let currentGameRecordId = null;
         let gameStartTime = null;
 
-        // ✅ Objeto currentUser actualizado para incluir la cédula
+        // Objeto currentUser actualizado para incluir la cédula
         let currentUser = {
             nombre: '',
             cedula: '',
@@ -690,7 +697,7 @@
             institucion: ''
         };
         
-        // ✅ Función startNewGameSession actualizada para incluir la cédula
+        // Función startNewGameSession actualizada para incluir la cédula
         function startNewGameSession() {
             if (!db || !currentUser.nombre) {
                 console.warn("Firebase no conectado o usuario no registrado. Jugando sin guardar sesión.");
@@ -719,8 +726,68 @@
                 console.error("Error al iniciar nueva sesión: ", error);
             });
         }
+        
+        // ----------------------------------------------------------------------
+        // 🟢 LÓGICA: Autocompletar por Cédula (Disparado por el nuevo botón)
+        // ----------------------------------------------------------------------
 
-        // ✅ El formulario ahora guarda la cédula en el objeto currentUser
+        /**
+         * Verifica si un jugador ya existe en Firestore usando la Cédula (disparado por el botón 'Buscar').
+         * Si existe, autocompleta los campos del formulario.
+         */
+        async function checkExistingPlayer() {
+            const cedulaInput = document.getElementById('cedulaUsuario');
+            const cedula = cedulaInput.value.trim();
+            
+            console.log("Evento 'Buscar' disparado. Cédula a buscar:", cedula); // Mensaje de confirmación
+            
+            // Solo busca si la cédula tiene 10 dígitos y Firebase está conectado
+            if (!db) {
+                alert("Error: Firebase no está conectado.");
+                return;
+            }
+
+            if (cedula.length !== 10) {
+                alert("Por favor, ingrese 10 dígitos numéricos en la Cédula.");
+                return;
+            }
+
+            try {
+                // Buscamos la última sesión registrada con esta cédula
+                const querySnapshot = await db.collection('game_sessions')
+                    .where('cedula', '==', cedula)
+                    .orderBy('startTime', 'desc') 
+                    .limit(1)
+                    .get();
+
+                if (!querySnapshot.empty) {
+                    const latestSession = querySnapshot.docs[0].data();
+                    
+                    // Rellena los campos con la información encontrada
+                    document.getElementById('nombreUsuario').value = latestSession.nombre || '';
+                    document.getElementById('correoUsuario').value = latestSession.correo || '';
+                    document.getElementById('telefonoUsuario').value = latestSession.telefono || '';
+                    document.getElementById('institucionUsuario').value = latestSession.institucion || '';
+                    
+                    console.log("Información de jugador anterior encontrada y rellenada:", latestSession);
+                    //alert(`¡Bienvenido de nuevo, ${latestSession.nombre.split(' ')[0]}! Información rellenada.`);
+                } else {
+                    // Si no lo encuentra, limpia los campos para nuevo registro 
+                    document.getElementById('nombreUsuario').value = '';
+                    document.getElementById('correoUsuario').value = '';
+                    document.getElementById('telefonoUsuario').value = '';
+                    document.getElementById('institucionUsuario').value = '';
+                    console.log("Cédula no encontrada. Por favor, complete el registro.");
+                    alert("Cédula no encontrada. Por favor, complete su registro.");
+                }
+
+            } catch (error) {
+                console.error("Error al buscar el jugador por cédula: ", error);
+                alert("Hubo un error al intentar buscar los datos. Por favor, inténtelo de nuevo.");
+            }
+        }
+        
+        // El formulario listener guarda los datos y lanza el juego
         registroForm.addEventListener('submit', (e) => {
             e.preventDefault();
             
@@ -1330,6 +1397,8 @@
             }
         });
 
+        // 🚨 CONFIGURACIÓN DE INICIO: Muestra el modal de registro al cargar.
+        // El listener 'blur' fue ELIMINADO y reemplazado por el botón 'Buscar'.
         window.onload = () => {
             initAudio();
             registrationModalEl.style.display = 'flex';
