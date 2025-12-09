@@ -423,7 +423,7 @@
                 <div class="modal-body" style="text-align: left;">
                     <p>Para comenzar a jugar y registrar tus logros ambientales, por favor ingresa tus datos.</p>
                     <form id="registroForm">
-                        
+    
                         <div style="margin-bottom: 10px;">
                             <label for="cedulaUsuario">Cédula:</label>
                             <div style="display: flex; gap: 5px;">
@@ -433,7 +433,7 @@
                                 </button>
                             </div>
                         </div>
-
+                    
                         <div style="margin-bottom: 10px;">
                             <label for="nombreUsuario">Nombre Completo:</label>
                             <input type="text" id="nombreUsuario" required style="width: 95%; padding: 8px; margin-top: 5px;">
@@ -449,6 +449,15 @@
                         <div style="margin-bottom: 15px;">
                             <label for="institucionUsuario">Institución (Opcional):</label>
                             <input type="text" id="institucionUsuario" style="width: 95%; padding: 8px; margin-top: 5px;">
+                        </div>
+                    
+                        <div style="margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px;">
+                            <input type="checkbox" id="checkTerminos" required style="width: 20px; height: 20px; cursor: pointer; margin-top: 2px;">
+                            <label for="checkTerminos" style="font-size: 14px; line-height: 1.4; color: #555;">
+                                He leído y acepto los 
+                                <a href="#" onclick="alert('Aquí se mostrarían los términos legales sobre el uso de datos y la privacidad del usuario.'); return false;" style="color: #386641; font-weight: bold; text-decoration: underline;">Términos y Condiciones</a> 
+                                y la Política de Privacidad para el tratamiento de mis datos.
+                            </label>
                         </div>
                         <button type="submit" id="submitRegistroBtn" class="fallback-button" style="width: 100%;">Registrar y Jugar</button>
                     </form>
